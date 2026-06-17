@@ -733,6 +733,27 @@
     margin-top:36px;
     font-family:var(--font-mono);
   }
+  .backup-bar{
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-top:12px;
+    flex-wrap:wrap;
+  }
+  .backup-btn{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.03em;
+    color:var(--text-muted);
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:7px 14px;
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+  }
+  .backup-btn:hover{ border-color:var(--brass); color:var(--brass); }
 
   @media (max-width:640px){
     .hero{flex-direction:column;align-items:flex-start;}
@@ -1037,7 +1058,15 @@
     </div>
   </div>
 
-  <footer class="note">Data saves automatically and privately to your account as you type.</footer>
+  <footer class="note">
+    <div id="storage-mode-note">Data saves automatically as you type.</div>
+    <div class="backup-bar">
+      <button id="backup-btn" type="button" class="backup-btn">⬇ Download backup</button>
+      <label class="backup-btn restore-label">⬆ Restore backup
+        <input type="file" id="restore-input" accept="application/json" style="display:none;">
+      </label>
+    </div>
+  </footer>
 </div>
 
 <script>
@@ -1086,15 +1115,39 @@ function styleSelectByValue(sel, value, map){
 }
 
 /* ============================== STORAGE ============================== */
+// Two backends: Anthropic's artifact storage (when this page is opened
+// inside a Claude chat) and the browser's own localStorage (when this file
+// is opened on its own, e.g. double-clicked or saved to disk). Whichever
+// is available is used automatically — same save/load calls either way.
+const LS_PREFIX = 'the-build-tracker:';
+const usingLocalFallback = !window.storage;
+
 async function storageGet(key){
-  if(!window.storage) return null;
-  try{ const r = await window.storage.get(key, false); return r ? r.value : null; }
+  if(window.storage){
+    try{ const r = await window.storage.get(key, false); return r ? r.value : null; }
+    catch(e){ return null; }
+  }
+  try{ return localStorage.getItem(LS_PREFIX+key); }
   catch(e){ return null; }
 }
 async function storageSet(key, value){
-  if(!window.storage) return false;
-  try{ const r = await window.storage.set(key, value, false); return !!r; }
+  if(window.storage){
+    try{ const r = await window.storage.set(key, value, false); return !!r; }
+    catch(e){ return false; }
+  }
+  try{ localStorage.setItem(LS_PREFIX+key, value); return true; }
   catch(e){ return false; }
+}
+async function storageList(prefix){
+  if(window.storage){
+    try{ const r = await window.storage.list(prefix, false); return r ? r.keys : []; }
+    catch(e){ return []; }
+  }
+  try{
+    return Object.keys(localStorage)
+      .filter(k=>k.startsWith(LS_PREFIX+prefix))
+      .map(k=>k.slice(LS_PREFIX.length));
+  }catch(e){ return []; }
 }
 
 function freshDay(){
@@ -1924,6 +1977,52 @@ function updateBookingStats(bookings){
     <div class="stat-chip"><div class="v">${rate}</div><div class="k">Close rate</div></div>
   `;
 }
+
+/* ============================== BACKUP / RESTORE ============================== */
+document.getElementById('storage-mode-note').textContent = usingLocalFallback
+  ? "Saving to this browser's local storage — stays on this device/browser. Back up regularly so a cleared cache can't wipe it."
+  : 'Data saves automatically and privately to your account as you type.';
+
+async function exportBackup(){
+  const dayKeys = await storageList('day:');
+  const dmKeys = await storageList('dmday:');
+  const days = {};
+  for(const k of dayKeys){ days[k.slice('day:'.length)] = await storageGet(k); }
+  const dmdays = {};
+  for(const k of dmKeys){ dmdays[k.slice('dmday:'.length)] = await storageGet(k); }
+  const leads = await storageGet('leads-list');
+  const bookings = await storageGet('bookings-list');
+  const payload = { exportedAt: new Date().toISOString(), days, dmdays, leads, bookings };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'the-build-tracker-backup-'+fmt(new Date())+'.json';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+async function importBackup(file){
+  let payload;
+  try{ payload = JSON.parse(await file.text()); }
+  catch(e){ alert("That file doesn't look like a valid backup."); return; }
+  if(!payload || typeof payload !== 'object'){ alert("That file doesn't look like a valid backup."); return; }
+  if(!confirm('This will overwrite any existing data for matching dates and lists with the backup contents. Continue?')) return;
+  if(payload.days) for(const [dateStr,v] of Object.entries(payload.days)) if(v!=null) await storageSet('day:'+dateStr, v);
+  if(payload.dmdays) for(const [dateStr,v] of Object.entries(payload.dmdays)) if(v!=null) await storageSet('dmday:'+dateStr, v);
+  if(payload.leads!=null) await storageSet('leads-list', payload.leads);
+  if(payload.bookings!=null) await storageSet('bookings-list', payload.bookings);
+  alert('Backup restored. Reloading…');
+  location.reload();
+}
+
+document.getElementById('backup-btn').addEventListener('click', exportBackup);
+document.getElementById('restore-input').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(file) importBackup(file);
+});
 
 /* ============================== INIT ============================== */
 renderDaily();
