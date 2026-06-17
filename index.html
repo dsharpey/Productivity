@@ -1,0 +1,1919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Build — Productivity Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#15171a;
+    --bg-grid:#1b1e22;
+    --panel:#1e2125;
+    --panel-2:#252930;
+    --border:#373c43;
+    --border-soft:#2b2f35;
+    --brass:#ee6c2f;
+    --brass-soft:rgba(238,108,47,0.16);
+    --brass-dim:#a8491c;
+    --sage:#4f8aa6;
+    --sage-soft:rgba(79,138,166,0.16);
+    --text:#eef0f1;
+    --text-muted:#9aa0a7;
+    --text-dim:#686f76;
+    --track:#292d33;
+    --radius:14px;
+    --radius-sm:8px;
+    --font-display:'Space Grotesk',sans-serif;
+    --font-body:'Inter',sans-serif;
+    --font-mono:'JetBrains Mono',monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  html,body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+    background-image:
+      linear-gradient(var(--bg-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bg-grid) 1px, transparent 1px);
+    background-size:38px 38px;
+    background-attachment:local;
+  }
+  /* ---------- Header ---------- */
+  .hero{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    flex-wrap:wrap;
+    gap:14px;
+    padding-bottom:20px;
+    border-bottom:1px solid var(--border);
+    margin-bottom:24px;
+  }
+  .hero-eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.18em;
+    color:var(--brass);
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .hero h1{
+    font-family:var(--font-display);
+    font-size:32px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .hero p{
+    margin:6px 0 0;
+    color:var(--text-muted);
+    font-size:14px;
+    max-width:480px;
+  }
+  .hero-stat{
+    text-align:right;
+    font-family:var(--font-mono);
+  }
+  .hero-stat .n{
+    font-size:30px;
+    color:var(--brass);
+    font-weight:600;
+    line-height:1;
+  }
+  .hero-stat .l{
+    font-size:11px;
+    color:var(--text-dim);
+    letter-spacing:.1em;
+    text-transform:uppercase;
+  }
+  /* ---------- Tabs ---------- */
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:4px;
+    max-width:100%;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    margin-bottom:26px;
+  }
+  .tab-btn{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13.5px;
+    letter-spacing:.02em;
+    padding:9px 20px;
+    border-radius:999px;
+    border:none;
+    background:transparent;
+    color:var(--text-muted);
+    cursor:pointer;
+    white-space:nowrap;
+    flex:none;
+    transition:background .15s,color .15s;
+  }
+  .tab-btn.active{
+    background:var(--brass);
+    color:#1c150a;
+  }
+  .view{display:none;}
+  .view.active{display:block;animation:fade .25s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+  /* ---------- DM setting subnav ---------- */
+  .subnav{
+    display:flex;
+    gap:22px;
+    margin-bottom:22px;
+    border-bottom:1px solid var(--border);
+  }
+  .subnav-btn{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:13.5px;
+    padding:10px 2px;
+    background:none;
+    border:none;
+    color:var(--text-muted);
+    cursor:pointer;
+    border-bottom:2px solid transparent;
+    position:relative;
+    top:1px;
+  }
+  .subnav-btn.active{ color:var(--text); border-bottom-color:var(--brass); }
+
+  /* ---------- Counters ---------- */
+  .counter-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:16px;
+    margin-bottom:20px;
+  }
+  .counter-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+    text-align:center;
+    transition:border-color .2s;
+  }
+  .counter-card.goal-hit{ border-color:var(--sage); }
+  .counter-card .c-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin-bottom:12px;
+  }
+  .counter-controls{ display:flex; align-items:center; justify-content:center; gap:12px; }
+  .counter-btn{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--panel-2);
+    color:var(--text);
+    font-size:17px;
+    line-height:1;
+    cursor:pointer;
+    flex:none;
+  }
+  .counter-btn:hover{ border-color:var(--brass); color:var(--brass); }
+  .counter-value{
+    font-family:var(--font-mono);
+    font-size:28px;
+    font-weight:600;
+    color:var(--text);
+    width:64px;
+    background:transparent;
+    border:none;
+    text-align:center;
+  }
+  .counter-value:focus{ outline:none; }
+  .counter-target{
+    margin-top:9px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+  }
+  .counter-card.goal-hit .counter-target{ color:var(--sage); }
+  .counter-progress-track{
+    height:6px;
+    border-radius:999px;
+    background:var(--track);
+    overflow:hidden;
+    margin-top:8px;
+  }
+  .counter-progress-fill{
+    height:100%;
+    border-radius:999px;
+    background:var(--brass);
+    transition:width .25s ease;
+  }
+  .counter-card.goal-hit .counter-progress-fill{ background:var(--sage); }
+  .counter-rate{
+    margin-top:8px;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--sage);
+    min-height:14px;
+  }
+
+  /* ---------- Funnel ---------- */
+  .funnel{ display:flex; flex-direction:column; gap:12px; }
+  .funnel-row{ display:grid; grid-template-columns:118px 1fr 40px; align-items:center; gap:10px; }
+  .funnel-label{ font-size:12px; color:var(--text-muted); font-family:var(--font-mono); }
+  .funnel-track{ height:13px; border-radius:999px; background:var(--track); overflow:hidden; }
+  .funnel-fill{ height:100%; border-radius:999px; transition:width .3s ease; }
+  .funnel-num{ font-family:var(--font-mono); font-size:12.5px; color:var(--text); text-align:right; }
+
+  /* ---------- CRUD tables (leads / bookings) ---------- */
+  .crud-header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:12px;
+    margin-bottom:16px;
+  }
+  .add-row-btn{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.04em;
+    text-transform:uppercase;
+    background:var(--brass);
+    color:#1c150a;
+    border:none;
+    border-radius:999px;
+    padding:9px 18px;
+    cursor:pointer;
+    flex:none;
+  }
+  .add-row-btn:hover{ opacity:.9; }
+  .crud-table-wrap{ overflow-x:auto; border:1px solid var(--border-soft); border-radius:var(--radius-sm); }
+  table.crud-table{ width:100%; border-collapse:collapse; min-width:680px; font-size:12.5px; }
+  table.crud-table th{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    text-align:left;
+    padding:9px 8px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--border);
+  }
+  table.crud-table td{ padding:6px 8px; border-bottom:1px solid var(--border-soft); }
+  table.crud-table input, table.crud-table select{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:6px;
+    padding:7px 8px;
+    font-size:12.5px;
+    font-family:var(--font-body);
+  }
+  table.crud-table select{ cursor:pointer; font-weight:500; }
+  .row-remove{
+    background:none;
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    border-radius:6px;
+    padding:6px 10px;
+    cursor:pointer;
+    font-size:11.5px;
+    font-family:var(--font-mono);
+    white-space:nowrap;
+  }
+  .row-remove:hover{ border-color:var(--brass-dim); color:var(--brass); }
+
+  /* ---------- Nav row (date/week/month) ---------- */
+  .period-nav{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:22px;
+    flex-wrap:wrap;
+  }
+  .nav-btn{
+    width:34px;height:34px;
+    border-radius:50%;
+    border:1px solid var(--border);
+    background:var(--panel);
+    color:var(--text);
+    font-size:16px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    transition:border-color .15s;
+  }
+  .nav-btn:hover{border-color:var(--brass);}
+  .period-label{
+    font-family:var(--font-display);
+    font-size:16px;
+    font-weight:600;
+    min-width:170px;
+  }
+  .period-label .sub{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-dim);
+    font-weight:400;
+    letter-spacing:.05em;
+  }
+  #daily-date-input{
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:var(--radius-sm);
+    padding:7px 10px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+  }
+  .today-btn{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    background:transparent;
+    border:1px solid var(--border);
+    color:var(--text-muted);
+    border-radius:999px;
+    padding:7px 14px;
+    cursor:pointer;
+  }
+  .today-btn:hover{border-color:var(--sage);color:var(--sage);}
+
+  /* ---------- Rings row ---------- */
+  .rings-row{
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+    margin-bottom:26px;
+  }
+  .ring-card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    flex:1;
+    min-width:150px;
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+  .ring-card.overall{
+    border-color:var(--brass-dim);
+    background:linear-gradient(160deg,var(--panel-2),var(--panel));
+  }
+  .ring-wrap{
+    position:relative;
+    width:64px;height:64px;
+    flex:none;
+  }
+  .ring-wrap canvas{position:absolute;inset:0;}
+  .ring-num{
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-mono);
+    font-size:14px;
+    font-weight:500;
+    color:var(--text);
+  }
+  .ring-meta .ring-title{
+    font-family:var(--font-display);
+    font-size:13px;
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:2px;
+  }
+  .ring-meta .ring-sub{
+    font-size:11px;
+    color:var(--text-dim);
+    font-family:var(--font-mono);
+  }
+  .ring-card.overall .ring-meta .ring-title{color:var(--brass);}
+
+  /* ---------- Panels ---------- */
+  .panels-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(310px,1fr));
+    gap:18px;
+    margin-bottom:18px;
+  }
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .panel.wide{grid-column:1/-1;}
+  .panel h3{
+    font-family:var(--font-display);
+    font-size:15px;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .panel .panel-sub{
+    font-size:12px;
+    color:var(--text-dim);
+    margin:0 0 16px;
+  }
+  .chart-box{position:relative;height:170px;margin-bottom:14px;}
+  .chart-box.short{height:130px;}
+
+  /* ---------- Habit rows ---------- */
+  .habit-row{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    padding:9px 0;
+    border-bottom:1px solid var(--border-soft);
+    border-left:3px solid transparent;
+    padding-left:8px;
+    transition:border-color .15s,background .15s;
+  }
+  .habit-row:last-child{border-bottom:none;}
+  .habit-row.done{
+    border-left-color:var(--sage);
+    background:var(--sage-soft);
+  }
+  .habit-row-main{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .habit-progress-track{
+    height:5px;
+    border-radius:999px;
+    background:var(--track);
+    overflow:hidden;
+  }
+  .habit-progress-fill{
+    height:100%;
+    border-radius:999px;
+    background:var(--brass);
+    width:0%;
+    transition:width .25s ease;
+  }
+  .habit-label{font-size:13.5px;color:var(--text);}
+  .habit-row.done .habit-label{color:var(--text);}
+  .habit-check{
+    width:19px;height:19px;
+    accent-color:var(--sage);
+    cursor:pointer;
+    flex:none;
+  }
+  .habit-count{
+    display:flex;align-items:center;gap:6px;flex:none;
+  }
+  .habit-input{
+    width:54px;
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:6px;
+    padding:5px 6px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    text-align:center;
+  }
+  .habit-target{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-dim);
+    white-space:nowrap;
+  }
+
+  /* ---------- Workout table ---------- */
+  .table-scroll{overflow-x:auto;margin-bottom:16px;border:1px solid var(--border-soft);border-radius:var(--radius-sm);}
+  table.workout-table{
+    width:100%;
+    border-collapse:collapse;
+    min-width:560px;
+    font-size:12.5px;
+  }
+  table.workout-table th{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    text-align:left;
+    padding:8px 6px;
+    background:var(--panel-2);
+    border-bottom:1px solid var(--border);
+  }
+  table.workout-table td{
+    padding:4px 6px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  table.workout-table input{
+    width:100%;
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:6px;
+    padding:6px 7px;
+    font-size:12.5px;
+    font-family:var(--font-body);
+  }
+  table.workout-table input.ex-name{font-weight:500;min-width:110px;}
+  table.workout-table input.set-input{width:62px;text-align:center;font-family:var(--font-mono);}
+
+  .complete-toggle{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    font-weight:400;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    cursor:pointer;
+  }
+  .complete-toggle input{
+    width:17px;height:17px;
+    accent-color:var(--sage);
+    cursor:pointer;
+  }
+  .rows-note{
+    font-size:11px;
+    color:var(--text-dim);
+    margin:8px 0 0;
+  }
+
+  .sub-block{
+    border-top:1px dashed var(--border);
+    padding-top:14px;
+    margin-top:6px;
+  }
+  .sub-block-title{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--brass);
+    margin-bottom:10px;
+  }
+  .field-row{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .field{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    flex:1;
+    min-width:110px;
+  }
+  .field label{font-size:11px;color:var(--text-dim);}
+  .field input,.field select{
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:6px;
+    padding:7px 8px;
+    font-size:12.5px;
+    font-family:var(--font-body);
+  }
+  .field input[type="time"]{font-family:var(--font-mono);}
+  .duration-pill{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--sage);
+    background:var(--sage-soft);
+    border-radius:999px;
+    padding:6px 12px;
+    align-self:flex-end;
+    white-space:nowrap;
+  }
+
+  /* ---------- Mental ---------- */
+  .mindful-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:8px;
+  }
+  .mindful-row input[type="text"]{flex:2;}
+  .mindful-row input[type="time"]{flex:1;font-family:var(--font-mono);}
+  .mindful-row input{
+    background:var(--bg);
+    border:1px solid var(--border);
+    color:var(--text);
+    border-radius:6px;
+    padding:7px 9px;
+    font-size:12.5px;
+  }
+  .slider-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:16px;
+    padding-top:14px;
+    border-top:1px dashed var(--border);
+  }
+  .slider-row input[type="range"]{
+    flex:1;
+    accent-color:var(--brass);
+  }
+  .slider-val{
+    font-family:var(--font-mono);
+    font-size:14px;
+    color:var(--brass);
+    width:34px;
+    text-align:center;
+  }
+  .mental-scale-label{
+    font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-top:4px;
+  }
+
+  /* ---------- Weekly highlight stats ---------- */
+  .stat-strip{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-top:14px;
+  }
+  .stat-chip{
+    background:var(--panel-2);
+    border:1px solid var(--border-soft);
+    border-radius:var(--radius-sm);
+    padding:8px 12px;
+    flex:1;
+    min-width:100px;
+  }
+  .stat-chip .v{font-family:var(--font-mono);font-size:16px;color:var(--brass);}
+  .stat-chip .k{font-size:10.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;}
+
+  /* ---------- Calendar heatmap ---------- */
+  .cal-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+  }
+  .cal-dow{
+    font-family:var(--font-mono);
+    font-size:10px;
+    color:var(--text-dim);
+    text-align:center;
+    text-transform:uppercase;
+    padding-bottom:4px;
+  }
+  .cal-cell{
+    aspect-ratio:1;
+    border-radius:7px;
+    border:1px solid var(--border-soft);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-muted);
+    position:relative;
+  }
+  .cal-cell.empty{border:none;}
+  .cal-cell.future{opacity:.35;}
+  .cal-legend{
+    display:flex;align-items:center;gap:6px;margin-top:14px;font-size:11px;color:var(--text-dim);
+  }
+  .cal-legend .sw{width:14px;height:14px;border-radius:4px;}
+
+  .baseline-note{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--text-dim);
+    margin-top:2px;
+  }
+  .baseline-note b{color:var(--brass);}
+
+  footer.note{
+    text-align:center;
+    color:var(--text-dim);
+    font-size:11.5px;
+    margin-top:36px;
+    font-family:var(--font-mono);
+  }
+
+  @media (max-width:640px){
+    .hero{flex-direction:column;align-items:flex-start;}
+    .hero-stat{text-align:left;}
+    table.workout-table{min-width:520px;}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <div>
+      <div class="hero-eyebrow">The Build — Dylan's Log</div>
+      <h1>Productivity Tracker</h1>
+      <p>Every DM sent, every set logged, every rep finished — that's the exit you're building. No shortcuts. No backup plan.</p>
+    </div>
+    <div class="hero-stat">
+      <div class="n" id="hero-score">—</div>
+      <div class="l">Today's Score / 10</div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" data-view="daily">Daily</button>
+    <button class="tab-btn" data-view="weekly">Weekly</button>
+    <button class="tab-btn" data-view="monthly">Monthly</button>
+    <button class="tab-btn" data-view="dmsetting">DM Setting</button>
+    <button class="tab-btn" data-view="bookings">Bookings</button>
+  </div>
+
+  <!-- ================= DAILY ================= -->
+  <div class="view active" id="daily-view">
+    <div class="period-nav">
+      <button class="nav-btn" id="daily-prev">‹</button>
+      <input type="date" id="daily-date-input">
+      <div class="period-label" id="daily-label"></div>
+      <button class="nav-btn" id="daily-next">›</button>
+      <button class="today-btn" id="daily-today">Jump to today</button>
+    </div>
+
+    <div class="rings-row">
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="ring-habits"></canvas><div class="ring-num" id="ring-habits-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Habits</div><div class="ring-sub" id="ring-habits-sub">0/10</div></div>
+      </div>
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="ring-workout"></canvas><div class="ring-num" id="ring-workout-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Workout</div><div class="ring-sub" id="ring-workout-sub">Incomplete</div></div>
+      </div>
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="ring-mental"></canvas><div class="ring-num" id="ring-mental-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Mental</div><div class="ring-sub" id="ring-mental-sub">0/3 tasks</div></div>
+      </div>
+      <div class="ring-card overall">
+        <div class="ring-wrap"><canvas id="ring-overall"></canvas><div class="ring-num" id="ring-overall-num">0</div></div>
+        <div class="ring-meta">
+          <div class="ring-title">Today's Ring</div>
+          <div class="ring-sub" id="ring-overall-sub">0/10</div>
+          <div class="baseline-note">Baseline <b>5/10</b> → today <b id="baseline-compare">0/10</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panels-grid">
+      <section class="panel">
+        <h3>Daily Habits</h3>
+        <p class="panel-sub">Tick it, log it, or leave it — the ring above doesn't lie.</p>
+        <div id="habit-list"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Mental</h3>
+        <p class="panel-sub">Mindful task performed</p>
+        <div id="mindful-rows"></div>
+        <div class="slider-row">
+          <label style="font-size:12.5px;color:var(--text-muted);white-space:nowrap;">Overall mental</label>
+          <input type="range" id="mental-overall" min="1" max="10" step="1" value="5">
+          <div class="slider-val" id="mental-overall-val">5</div>
+        </div>
+        <div class="mental-scale-label"><span>Drained</span><span>Sharp &amp; clear</span></div>
+      </section>
+
+      <section class="panel wide">
+        <h3>Workout Tracker
+          <label class="complete-toggle"><input type="checkbox" id="workout-complete"> Workout complete</label>
+        </h3>
+        <p class="panel-sub">Toggle complete once you've trained — the table below is just for your records, it doesn't have to be full.</p>
+        <div class="table-scroll">
+          <table class="workout-table">
+            <thead><tr>
+              <th>Exercise</th><th>Set 1</th><th>Set 2</th><th>Set 3</th><th>Set 4</th><th>Set 5</th>
+            </tr></thead>
+            <tbody id="workout-tbody"></tbody>
+          </table>
+        </div>
+        <p class="rows-note" id="workout-rows-note"></p>
+
+        <div class="sub-block">
+          <div class="sub-block-title">Cardio</div>
+          <div class="field-row">
+            <div class="field"><label>Type</label>
+              <select id="cardio-type">
+                <option value="">—</option>
+                <option>Run</option><option>Bike</option><option>Row</option><option>Swim</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field"><label>Duration (min)</label><input type="number" id="cardio-duration" min="0"></div>
+            <div class="field"><label>Distance (km)</label><input type="number" id="cardio-distance" min="0" step="0.1"></div>
+            <div class="field"><label>Notes</label><input type="text" id="cardio-notes"></div>
+          </div>
+        </div>
+
+        <div class="sub-block">
+          <div class="sub-block-title">Session Time</div>
+          <div class="field-row">
+            <div class="field"><label>Start</label><input type="time" id="workout-start"></div>
+            <div class="field"><label>End</label><input type="time" id="workout-end"></div>
+            <div class="duration-pill" id="workout-duration">— duration</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= WEEKLY ================= -->
+  <div class="view" id="weekly-view">
+    <div class="period-nav">
+      <button class="nav-btn" id="week-prev">‹</button>
+      <div class="period-label" id="week-label">—<span class="sub" id="week-sublabel"></span></div>
+      <button class="nav-btn" id="week-next">›</button>
+      <button class="today-btn" id="week-today">Jump to this week</button>
+    </div>
+
+    <div class="rings-row">
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="wring-habits"></canvas><div class="ring-num" id="wring-habits-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Habits avg</div><div class="ring-sub">across 7 days</div></div>
+      </div>
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="wring-workout"></canvas><div class="ring-num" id="wring-workout-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Workout avg</div><div class="ring-sub" id="wring-workout-sub">0 sessions</div></div>
+      </div>
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="wring-mental"></canvas><div class="ring-num" id="wring-mental-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Mental avg</div><div class="ring-sub">across 7 days</div></div>
+      </div>
+      <div class="ring-card overall">
+        <div class="ring-wrap"><canvas id="wring-overall"></canvas><div class="ring-num" id="wring-overall-num">0</div></div>
+        <div class="ring-meta"><div class="ring-title">Week's Ring</div><div class="ring-sub" id="wring-overall-sub">0/10 avg</div></div>
+      </div>
+    </div>
+
+    <div class="panels-grid">
+      <section class="panel">
+        <h3>Habits — this week</h3>
+        <div class="chart-box"><canvas id="chart-week-habits"></canvas></div>
+        <div class="stat-strip" id="week-habit-stats"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Workout — this week</h3>
+        <div class="chart-box"><canvas id="chart-week-workout"></canvas></div>
+        <div class="stat-strip" id="week-workout-stats"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Mental — this week</h3>
+        <div class="chart-box"><canvas id="chart-week-mental"></canvas></div>
+        <div class="stat-strip" id="week-mental-stats"></div>
+      </section>
+
+      <section class="panel wide">
+        <h3>Overall — this week</h3>
+        <p class="panel-sub">Combined daily score (habits + workout + mental, blended).</p>
+        <div class="chart-box short"><canvas id="chart-week-overall"></canvas></div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= MONTHLY ================= -->
+  <div class="view" id="monthly-view">
+    <div class="period-nav">
+      <button class="nav-btn" id="month-prev">‹</button>
+      <div class="period-label" id="month-label">—</div>
+      <button class="nav-btn" id="month-next">›</button>
+      <button class="today-btn" id="month-today">Jump to this month</button>
+    </div>
+
+    <div class="rings-row">
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="mring-habits"></canvas><div class="ring-num" id="mring-habits-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Habits avg</div><div class="ring-sub">this month</div></div>
+      </div>
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="mring-workout"></canvas><div class="ring-num" id="mring-workout-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Workout avg</div><div class="ring-sub" id="mring-workout-sub">0 sessions</div></div>
+      </div>
+      <div class="ring-card">
+        <div class="ring-wrap"><canvas id="mring-mental"></canvas><div class="ring-num" id="mring-mental-num">0%</div></div>
+        <div class="ring-meta"><div class="ring-title">Mental avg</div><div class="ring-sub">this month</div></div>
+      </div>
+      <div class="ring-card overall">
+        <div class="ring-wrap"><canvas id="mring-overall"></canvas><div class="ring-num" id="mring-overall-num">0</div></div>
+        <div class="ring-meta"><div class="ring-title">Month's Ring</div><div class="ring-sub" id="mring-overall-sub">0/10 avg</div></div>
+      </div>
+    </div>
+
+    <div class="panels-grid">
+      <section class="panel">
+        <h3>Habits — by week</h3>
+        <div class="chart-box"><canvas id="chart-month-habits"></canvas></div>
+        <div class="stat-strip" id="month-habit-stats"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Workout — by week</h3>
+        <div class="chart-box"><canvas id="chart-month-workout"></canvas></div>
+        <div class="stat-strip" id="month-workout-stats"></div>
+      </section>
+
+      <section class="panel">
+        <h3>Mental — by week</h3>
+        <div class="chart-box"><canvas id="chart-month-mental"></canvas></div>
+        <div class="stat-strip" id="month-mental-stats"></div>
+      </section>
+
+      <section class="panel wide">
+        <h3>Overall — month grain</h3>
+        <p class="panel-sub">One square per day, shaded by overall score — read it like growth rings.</p>
+        <div class="cal-grid" id="cal-grid"></div>
+        <div class="cal-legend">
+          <span>Low</span>
+          <span class="sw" style="background:var(--track)"></span>
+          <span class="sw" style="background:rgba(238,108,47,0.35)"></span>
+          <span class="sw" style="background:rgba(238,108,47,0.65)"></span>
+          <span class="sw" style="background:var(--brass)"></span>
+          <span>High</span>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- ================= DM SETTING ================= -->
+  <div class="view" id="dmsetting-view">
+    <div class="subnav">
+      <button class="subnav-btn active" data-sub="tracker">Tracker</button>
+      <button class="subnav-btn" data-sub="leads">Leads</button>
+    </div>
+
+    <div id="dm-tracker-subview">
+      <div class="period-nav">
+        <button class="nav-btn" id="dm-prev">‹</button>
+        <input type="date" id="dm-date-input">
+        <div class="period-label" id="dm-date-label"></div>
+        <button class="nav-btn" id="dm-next">›</button>
+        <button class="today-btn" id="dm-today">Jump to today</button>
+      </div>
+
+      <div class="counter-grid" id="counter-grid"></div>
+
+      <div class="panels-grid">
+        <section class="panel">
+          <h3>Today's Funnel</h3>
+          <p class="panel-sub">Where today's reps are landing.</p>
+          <div class="funnel" id="funnel"></div>
+        </section>
+
+        <section class="panel">
+          <h3>Last 7 Days</h3>
+          <p class="panel-sub">Sent, convos, leads and calls, side by side.</p>
+          <div class="chart-box"><canvas id="chart-dm-trend"></canvas></div>
+        </section>
+      </div>
+    </div>
+
+    <div id="dm-leads-subview" style="display:none;">
+      <div class="crud-header-row">
+        <button class="add-row-btn" id="add-lead-btn">+ Add lead</button>
+        <div class="stat-strip" id="lead-stats" style="margin:0;flex:1;min-width:240px;"></div>
+      </div>
+      <div class="crud-table-wrap">
+        <table class="crud-table">
+          <thead><tr><th>Name / IG</th><th>Stage</th><th>Date spoken to</th><th>Age</th><th></th></tr></thead>
+          <tbody id="leads-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BOOKINGS ================= -->
+  <div class="view" id="bookings-view">
+    <div class="crud-header-row">
+      <button class="add-row-btn" id="add-booking-btn">+ Add booking</button>
+      <div class="stat-strip" id="booking-stats" style="margin:0;flex:1;min-width:240px;"></div>
+    </div>
+    <div class="crud-table-wrap">
+      <table class="crud-table">
+        <thead><tr><th>Name</th><th>Email</th><th>Number</th><th>Booking date &amp; time</th><th>Status</th><th></th></tr></thead>
+        <tbody id="bookings-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <footer class="note">Data saves automatically and privately to your account as you type.</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ============================== CONFIG ============================== */
+const HABITS = [
+  {id:'phoneFree', label:'No phone for the first 30 minutes', type:'check'},
+  {id:'dms',        label:'60 Personal DMs', type:'count', target:60, unit:'DMs'},
+  {id:'call',       label:'Book 1 call', type:'count', target:1, unit:'call'},
+  {id:'study',      label:'Study psychology', type:'check'},
+  {id:'mindfulRoutine', label:'Meditate, visualize & journal', type:'check'},
+  {id:'meals',      label:'Eat all meals', type:'check'},
+  {id:'deepWork',   label:'Deep work on laptop (5h min)', type:'count', target:5, unit:'hrs'},
+  {id:'scrolling',  label:'Minimize scrolling', type:'check'},
+  {id:'prayer',     label:'Prayer', type:'check'},
+  {id:'walk',       label:'30 minute walk', type:'check'},
+];
+const BASELINE = 5; // user's stated current productivity level, out of 10
+const COLORS = {
+  brass:'#ee6c2f', sage:'#4f8aa6', track:'#292d33', text:'#eef0f1', dim:'#9aa0a7'
+};
+
+const STAGE_OPTIONS = ['warm','cold','unqualified','booked'];
+const STAGE_STYLES = {
+  warm:{bg:'rgba(238,108,47,0.18)', color:'#ffb083', border:'rgba(238,108,47,0.45)'},
+  cold:{bg:'rgba(79,138,166,0.18)', color:'#a9d3e3', border:'rgba(79,138,166,0.45)'},
+  unqualified:{bg:'rgba(255,255,255,0.05)', color:'#9aa0a7', border:'#373c43'},
+  booked:{bg:'#ee6c2f', color:'#1c0e06', border:'#ee6c2f'}
+};
+const STATUS_OPTIONS = ['close','no close','no show','rebooked'];
+const STATUS_STYLES = {
+  'close':{bg:'#ee6c2f', color:'#1c0e06', border:'#ee6c2f'},
+  'no close':{bg:'rgba(255,255,255,0.05)', color:'#9aa0a7', border:'#373c43'},
+  'no show':{bg:'rgba(120,58,40,0.45)', color:'#e8b8a8', border:'rgba(120,58,40,0.7)'},
+  'rebooked':{bg:'rgba(79,138,166,0.18)', color:'#a9d3e3', border:'rgba(79,138,166,0.45)'}
+};
+function capitalize(s){ return s.charAt(0).toUpperCase()+s.slice(1); }
+function genId(){ return 'id_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,7); }
+function styleSelectByValue(sel, value, map){
+  const s = map[value] || {bg:'var(--bg)', color:'var(--text)', border:'var(--border)'};
+  sel.style.background = s.bg;
+  sel.style.color = s.color;
+  sel.style.borderColor = s.border;
+}
+
+/* ============================== STORAGE ============================== */
+async function storageGet(key){
+  if(!window.storage) return null;
+  try{ const r = await window.storage.get(key, false); return r ? r.value : null; }
+  catch(e){ return null; }
+}
+async function storageSet(key, value){
+  if(!window.storage) return false;
+  try{ const r = await window.storage.set(key, value, false); return !!r; }
+  catch(e){ return false; }
+}
+
+function freshDay(){
+  const habits = {};
+  HABITS.forEach(h=>{ habits[h.id] = h.type==='check' ? false : 0; });
+  return {
+    habits,
+    workout:{
+      complete:false,
+      exercises: Array.from({length:10}, ()=>({name:'', sets:['','','','','']})),
+      cardio:{type:'', duration:'', distance:'', notes:''},
+      startTime:'', endTime:''
+    },
+    mental:{
+      tasks: Array.from({length:3}, ()=>({task:'', time:''})),
+      overall:5
+    }
+  };
+}
+
+const dayCache = {}; // dateStr -> data object (in-memory, mirrors storage)
+
+async function getDay(dateStr){
+  if(dayCache[dateStr]) return dayCache[dateStr];
+  const raw = await storageGet('day:'+dateStr);
+  let data;
+  if(raw){
+    try{ data = JSON.parse(raw); }catch(e){ data = freshDay(); }
+  } else {
+    data = freshDay();
+  }
+  // guard against any shape drift
+  data = Object.assign(freshDay(), data);
+  if(!data.workout) data.workout = freshDay().workout;
+  if(!data.mental) data.mental = freshDay().mental;
+  if(!data.habits) data.habits = freshDay().habits;
+  dayCache[dateStr] = data;
+  return data;
+}
+
+function saveDay(dateStr){
+  const data = dayCache[dateStr];
+  if(!data) return;
+  storageSet('day:'+dateStr, JSON.stringify(data));
+}
+
+/* ---- DM setting day counters ---- */
+function freshDMDay(){ return {sent:0, convos:0, leads:0, calls:0}; }
+const dmDayCache = {};
+async function getDMDay(dateStr){
+  if(dmDayCache[dateStr]) return dmDayCache[dateStr];
+  const raw = await storageGet('dmday:'+dateStr);
+  let data = freshDMDay();
+  if(raw){ try{ data = Object.assign(freshDMDay(), JSON.parse(raw)); }catch(e){} }
+  dmDayCache[dateStr] = data;
+  return data;
+}
+function saveDMDay(dateStr){
+  const data = dmDayCache[dateStr];
+  if(!data) return;
+  storageSet('dmday:'+dateStr, JSON.stringify(data));
+}
+
+/* ---- Leads / bookings lists ---- */
+async function loadList(key){
+  const raw = await storageGet(key);
+  if(!raw) return [];
+  try{ const arr = JSON.parse(raw); return Array.isArray(arr) ? arr : []; }
+  catch(e){ return []; }
+}
+function saveList(key, arr){ storageSet(key, JSON.stringify(arr)); }
+
+let leadsData = null;
+let bookingsData = null;
+async function ensureLeads(){ if(leadsData===null) leadsData = await loadList('leads-list'); return leadsData; }
+async function ensureBookings(){ if(bookingsData===null) bookingsData = await loadList('bookings-list'); return bookingsData; }
+
+/* ============================== DATE HELPERS ============================== */
+function fmt(d){
+  const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), da=String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${da}`;
+}
+function parseDate(str){ const [y,m,d]=str.split('-').map(Number); return new Date(y, m-1, d); }
+function addDays(d, n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function startOfWeek(d){ // Monday start
+  const r=new Date(d);
+  const dow=(r.getDay()+6)%7; // 0 = Monday
+  r.setDate(r.getDate()-dow);
+  return r;
+}
+function isFuture(d){ const t=new Date(); t.setHours(0,0,0,0); return d.getTime() > t.getTime(); }
+const DOW_LABELS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTH_LABELS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+/* ============================== METRICS ============================== */
+function habitsPct(day){
+  let sum=0;
+  HABITS.forEach(h=>{
+    const v = day.habits[h.id];
+    if(h.type==='check'){ sum += v ? 1 : 0; }
+    else { sum += Math.min(1, (Number(v)||0)/h.target); }
+  });
+  return (sum/HABITS.length)*100;
+}
+function habitsDoneCount(day){
+  let c=0;
+  HABITS.forEach(h=>{
+    const v=day.habits[h.id];
+    if(h.type==='check'){ if(v) c++; }
+    else { if((Number(v)||0) >= h.target) c++; }
+  });
+  return c;
+}
+function workoutRowsFilled(day){
+  return day.workout.exercises.filter(e=> e.name.trim()!=='' || e.sets.some(s=>String(s).trim()!=='')).length;
+}
+function workoutPct(day){ return day.workout.complete ? 100 : 0; }
+function workoutHasSession(day){ return !!day.workout.complete; }
+function mentalTasksFilled(day){ return day.mental.tasks.filter(t=>t.task.trim()!=='').length; }
+function mentalPct(day){
+  const taskPart = (mentalTasksFilled(day)/3)*50;
+  const overallPart = (Number(day.mental.overall)/10)*50;
+  return taskPart+overallPart;
+}
+function overallPct(day){
+  return (habitsPct(day)+workoutPct(day)+mentalPct(day))/3;
+}
+function overallOutOf10(day){ return overallPct(day)/10; }
+function minutesBetween(start,end){
+  if(!start || !end) return null;
+  const [sh,sm]=start.split(':').map(Number);
+  const [eh,em]=end.split(':').map(Number);
+  let mins = (eh*60+em)-(sh*60+sm);
+  if(mins<0) mins += 24*60;
+  return mins;
+}
+function fmtDuration(mins){
+  if(mins==null) return '— duration';
+  const h=Math.floor(mins/60), m=mins%60;
+  if(h===0) return `${m}m`;
+  return `${h}h ${m}m`;
+}
+
+/* ============================== CHART REGISTRY ============================== */
+const charts = {};
+function ringChart(canvasId, pct, color){
+  const el = document.getElementById(canvasId);
+  if(!el) return;
+  const clamped = Math.max(0, Math.min(100, pct||0));
+  if(charts[canvasId]){
+    charts[canvasId].data.datasets[0].data = [clamped, 100-clamped];
+    charts[canvasId].data.datasets[0].backgroundColor = [color, COLORS.track];
+    charts[canvasId].update();
+    return;
+  }
+  charts[canvasId] = new Chart(el.getContext('2d'), {
+    type:'doughnut',
+    data:{ datasets:[{ data:[clamped,100-clamped], backgroundColor:[color,COLORS.track], borderWidth:0 }] },
+    options:{
+      cutout:'72%',
+      responsive:true,
+      maintainAspectRatio:true,
+      animation:{duration:350},
+      plugins:{ legend:{display:false}, tooltip:{enabled:false} }
+    }
+  });
+}
+function barOrLineChart(canvasId, type, labels, datasets, opts){
+  opts = opts || {};
+  const el = document.getElementById(canvasId);
+  if(!el) return;
+  if(charts[canvasId]){ charts[canvasId].destroy(); }
+  const maxVal = Object.prototype.hasOwnProperty.call(opts,'max') ? opts.max : 100;
+  const yScale = {
+    grid:{color:'rgba(255,255,255,0.04)'},
+    ticks:{color:COLORS.dim, font:{family:"'JetBrains Mono', monospace", size:10.5}},
+    beginAtZero:true
+  };
+  if(maxVal !== null) yScale.max = maxVal;
+  const baseOptions = {
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{ grid:{color:'rgba(255,255,255,0.04)'}, ticks:{color:COLORS.dim, font:{family:"'JetBrains Mono', monospace", size:10.5}} },
+      y:yScale
+    },
+    plugins:{ legend:{ display: datasets.length>1, labels:{color:COLORS.dim, font:{size:11}} }, tooltip:{enabled:true} }
+  };
+  charts[canvasId] = new Chart(el.getContext('2d'), { type, data:{labels, datasets}, options: Object.assign(baseOptions, opts.override ? opts.override : {}) });
+}
+
+/* ============================== APP STATE ============================== */
+let dailyDate = new Date();
+let weekStart = startOfWeek(new Date());
+let monthCursor = new Date(); // any date within current month
+let dmDate = new Date();
+let dmSubview = 'tracker'; // 'tracker' | 'leads'
+
+/* ============================== TAB SWITCHING ============================== */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    btn.classList.add('active');
+    const view = btn.dataset.view;
+    document.getElementById(view+'-view').classList.add('active');
+    if(view==='daily') renderDaily();
+    if(view==='weekly') renderWeekly();
+    if(view==='monthly') renderMonthly();
+    if(view==='dmsetting') renderDMSetting();
+    if(view==='bookings') renderBookings();
+  });
+});
+
+/* ============================== DAILY VIEW ============================== */
+const dateInput = document.getElementById('daily-date-input');
+dateInput.addEventListener('change', ()=>{
+  if(dateInput.value){ dailyDate = parseDate(dateInput.value); renderDaily(); }
+});
+document.getElementById('daily-prev').addEventListener('click', ()=>{ dailyDate = addDays(dailyDate,-1); renderDaily(); });
+document.getElementById('daily-next').addEventListener('click', ()=>{ dailyDate = addDays(dailyDate,1); renderDaily(); });
+document.getElementById('daily-today').addEventListener('click', ()=>{ dailyDate = new Date(); renderDaily(); });
+
+function habitRowHTML(h, day){
+  const v = day.habits[h.id];
+  if(h.type==='check'){
+    return `<div class="habit-row ${v?'done':''}" data-id="${h.id}">
+      <div class="habit-row-main">
+        <span class="habit-label">${h.label}</span>
+        <input type="checkbox" class="habit-check" ${v?'checked':''}>
+      </div>
+    </div>`;
+  }
+  const num = Number(v)||0;
+  const done = num >= h.target;
+  const pct = Math.max(0, Math.min(100, (num/h.target)*100));
+  return `<div class="habit-row ${done?'done':''}" data-id="${h.id}">
+    <div class="habit-row-main">
+      <span class="habit-label">${h.label}</span>
+      <div class="habit-count">
+        <input type="number" class="habit-input" min="0" value="${num}">
+        <span class="habit-target">/ ${h.target} ${h.unit}</span>
+      </div>
+    </div>
+    <div class="habit-progress-track"><div class="habit-progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+}
+
+async function renderDaily(){
+  const dateStr = fmt(dailyDate);
+  dateInput.value = dateStr;
+  const todayStr = fmt(new Date());
+  document.getElementById('daily-label').innerHTML =
+    (dateStr===todayStr ? 'Today' : dailyDate.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})) +
+    `<span class="sub">${dailyDate.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</span>`;
+
+  const day = await getDay(dateStr);
+
+  // Habit list
+  const habitList = document.getElementById('habit-list');
+  habitList.innerHTML = HABITS.map(h=>habitRowHTML(h, day)).join('');
+  habitList.querySelectorAll('.habit-row').forEach(row=>{
+    const id = row.dataset.id;
+    const h = HABITS.find(x=>x.id===id);
+    if(h.type==='check'){
+      row.querySelector('.habit-check').addEventListener('change', (e)=>{
+        day.habits[id] = e.target.checked;
+        row.classList.toggle('done', e.target.checked);
+        saveDay(dateStr);
+        refreshDailyRings(day);
+      });
+    } else {
+      row.querySelector('.habit-input').addEventListener('input', (e)=>{
+        const val = Number(e.target.value)||0;
+        day.habits[id] = val;
+        row.classList.toggle('done', val >= h.target);
+        const pct = Math.max(0, Math.min(100, (val/h.target)*100));
+        const fill = row.querySelector('.habit-progress-fill');
+        if(fill) fill.style.width = pct+'%';
+        saveDay(dateStr);
+        refreshDailyRings(day);
+      });
+    }
+  });
+
+  // Workout complete toggle
+  const completeEl = document.getElementById('workout-complete');
+  completeEl.checked = !!day.workout.complete;
+  completeEl.onchange = (e)=>{
+    day.workout.complete = e.target.checked;
+    saveDay(dateStr);
+    refreshDailyRings(day);
+  };
+
+  // Workout table
+  function updateRowsNote(){
+    const n = workoutRowsFilled(day);
+    document.getElementById('workout-rows-note').textContent = `${n}/10 exercises logged for the record — only the toggle above counts toward your score.`;
+  }
+  const tbody = document.getElementById('workout-tbody');
+  tbody.innerHTML = day.workout.exercises.map((ex,i)=>`
+    <tr data-row="${i}">
+      <td><input type="text" class="ex-name" placeholder="Exercise ${i+1}" value="${escapeHtml(ex.name)}"></td>
+      ${ex.sets.map((s,si)=>`<td><input type="text" class="set-input" data-set="${si}" value="${escapeHtml(s)}"></td>`).join('')}
+    </tr>
+  `).join('');
+  updateRowsNote();
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const ri = Number(tr.dataset.row);
+    tr.querySelector('.ex-name').addEventListener('input', (e)=>{
+      day.workout.exercises[ri].name = e.target.value;
+      saveDay(dateStr);
+      updateRowsNote();
+    });
+    tr.querySelectorAll('.set-input').forEach(inp=>{
+      inp.addEventListener('input', (e)=>{
+        const si = Number(e.target.dataset.set);
+        day.workout.exercises[ri].sets[si] = e.target.value;
+        saveDay(dateStr);
+        updateRowsNote();
+      });
+    });
+  });
+
+  // Cardio
+  document.getElementById('cardio-type').value = day.workout.cardio.type || '';
+  document.getElementById('cardio-duration').value = day.workout.cardio.duration || '';
+  document.getElementById('cardio-distance').value = day.workout.cardio.distance || '';
+  document.getElementById('cardio-notes').value = day.workout.cardio.notes || '';
+  document.getElementById('cardio-type').onchange = (e)=>{ day.workout.cardio.type=e.target.value; saveDay(dateStr); };
+  document.getElementById('cardio-duration').oninput = (e)=>{ day.workout.cardio.duration=e.target.value; saveDay(dateStr); };
+  document.getElementById('cardio-distance').oninput = (e)=>{ day.workout.cardio.distance=e.target.value; saveDay(dateStr); };
+  document.getElementById('cardio-notes').oninput = (e)=>{ day.workout.cardio.notes=e.target.value; saveDay(dateStr); };
+
+  // Session time
+  const startEl = document.getElementById('workout-start');
+  const endEl = document.getElementById('workout-end');
+  startEl.value = day.workout.startTime || '';
+  endEl.value = day.workout.endTime || '';
+  function updateDuration(){
+    document.getElementById('workout-duration').textContent = fmtDuration(minutesBetween(startEl.value, endEl.value));
+  }
+  updateDuration();
+  startEl.onchange = (e)=>{ day.workout.startTime=e.target.value; saveDay(dateStr); updateDuration(); };
+  endEl.onchange = (e)=>{ day.workout.endTime=e.target.value; saveDay(dateStr); updateDuration(); };
+
+  // Mental rows
+  const mindfulWrap = document.getElementById('mindful-rows');
+  mindfulWrap.innerHTML = day.mental.tasks.map((t,i)=>`
+    <div class="mindful-row" data-row="${i}">
+      <input type="text" class="mt-task" placeholder="Mindful task performed" value="${escapeHtml(t.task)}">
+      <input type="time" class="mt-time" value="${t.time||''}">
+    </div>
+  `).join('');
+  mindfulWrap.querySelectorAll('.mindful-row').forEach(row=>{
+    const ri = Number(row.dataset.row);
+    row.querySelector('.mt-task').addEventListener('input', (e)=>{
+      day.mental.tasks[ri].task = e.target.value;
+      saveDay(dateStr);
+      refreshDailyRings(day);
+    });
+    row.querySelector('.mt-time').addEventListener('change', (e)=>{
+      day.mental.tasks[ri].time = e.target.value;
+      saveDay(dateStr);
+    });
+  });
+
+  const overallSlider = document.getElementById('mental-overall');
+  const overallVal = document.getElementById('mental-overall-val');
+  overallSlider.value = day.mental.overall || 5;
+  overallVal.textContent = overallSlider.value;
+  overallSlider.oninput = (e)=>{
+    day.mental.overall = Number(e.target.value);
+    overallVal.textContent = e.target.value;
+    saveDay(dateStr);
+    refreshDailyRings(day);
+  };
+
+  refreshDailyRings(day);
+}
+
+function refreshDailyRings(day){
+  const hp = habitsPct(day), wp = workoutPct(day), mp = mentalPct(day), op = overallPct(day);
+  ringChart('ring-habits', hp, COLORS.sage);
+  ringChart('ring-workout', wp, COLORS.brass);
+  ringChart('ring-mental', mp, COLORS.sage);
+  ringChart('ring-overall', op, COLORS.brass);
+
+  document.getElementById('ring-habits-num').textContent = Math.round(hp)+'%';
+  document.getElementById('ring-habits-sub').textContent = habitsDoneCount(day)+'/10';
+  document.getElementById('ring-workout-num').textContent = Math.round(wp)+'%';
+  document.getElementById('ring-workout-sub').textContent = day.workout.complete ? 'Complete' : 'Incomplete';
+  document.getElementById('ring-mental-num').textContent = Math.round(mp)+'%';
+  document.getElementById('ring-mental-sub').textContent = mentalTasksFilled(day)+'/3 tasks';
+
+  const score10 = overallOutOf10(day);
+  document.getElementById('ring-overall-num').textContent = score10.toFixed(1);
+  document.getElementById('ring-overall-sub').textContent = score10.toFixed(1)+'/10';
+  document.getElementById('hero-score').textContent = score10.toFixed(1);
+  document.getElementById('baseline-compare').textContent = score10.toFixed(1)+'/10';
+}
+
+function escapeHtml(str){
+  return String(str).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ============================== WEEKLY VIEW ============================== */
+document.getElementById('week-prev').addEventListener('click', ()=>{ weekStart = addDays(weekStart,-7); renderWeekly(); });
+document.getElementById('week-next').addEventListener('click', ()=>{ weekStart = addDays(weekStart,7); renderWeekly(); });
+document.getElementById('week-today').addEventListener('click', ()=>{ weekStart = startOfWeek(new Date()); renderWeekly(); });
+
+async function renderWeekly(){
+  const days = Array.from({length:7}, (_,i)=>addDays(weekStart,i));
+  const dateStrs = days.map(fmt);
+  document.getElementById('week-label').innerHTML =
+    `${days[0].toLocaleDateString(undefined,{month:'short',day:'numeric'})} – ${days[6].toLocaleDateString(undefined,{month:'short',day:'numeric'})}` +
+    `<span class="sub" id="week-sublabel">${days[0].getFullYear()}</span>`;
+
+  const dayData = await Promise.all(dateStrs.map(getDay));
+
+  const hPcts = dayData.map(habitsPct);
+  const wPcts = dayData.map(workoutPct);
+  const mPcts = dayData.map(mentalPct);
+  const oPcts = dayData.map(overallPct);
+
+  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const hAvg = avg(hPcts), wAvg = avg(wPcts), mAvg = avg(mPcts), oAvg = avg(oPcts);
+
+  ringChart('wring-habits', hAvg, COLORS.sage);
+  ringChart('wring-workout', wAvg, COLORS.brass);
+  ringChart('wring-mental', mAvg, COLORS.sage);
+  ringChart('wring-overall', oAvg, COLORS.brass);
+  document.getElementById('wring-habits-num').textContent = Math.round(hAvg)+'%';
+  document.getElementById('wring-workout-num').textContent = Math.round(wAvg)+'%';
+  document.getElementById('wring-mental-num').textContent = Math.round(mAvg)+'%';
+  const oAvg10 = oAvg/10;
+  document.getElementById('wring-overall-num').textContent = oAvg10.toFixed(1);
+  document.getElementById('wring-overall-sub').textContent = oAvg10.toFixed(1)+'/10 avg';
+
+  const sessions = dayData.filter(workoutHasSession).length;
+  document.getElementById('wring-workout-sub').textContent = sessions+' session'+(sessions===1?'':'s');
+
+  // Habits chart
+  barOrLineChart('chart-week-habits','bar', DOW_LABELS, [{
+    label:'Habits %', data:hPcts, backgroundColor:COLORS.sage, borderRadius:5, maxBarThickness:34
+  }]);
+  const totalDMs = dayData.reduce((a,d)=>a+(Number(d.habits.dms)||0),0);
+  const totalCalls = dayData.reduce((a,d)=>a+(Number(d.habits.call)||0),0);
+  const totalDeepWork = dayData.reduce((a,d)=>a+(Number(d.habits.deepWork)||0),0);
+  document.getElementById('week-habit-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${totalDMs}</div><div class="k">DMs sent</div></div>
+    <div class="stat-chip"><div class="v">${totalCalls}</div><div class="k">Calls booked</div></div>
+    <div class="stat-chip"><div class="v">${totalDeepWork.toFixed(1)}h</div><div class="k">Deep work</div></div>
+  `;
+
+  // Workout chart
+  barOrLineChart('chart-week-workout','bar', DOW_LABELS, [{
+    label:'Workout %', data:wPcts, backgroundColor:COLORS.brass, borderRadius:5, maxBarThickness:34
+  }]);
+  const cardioCount = dayData.filter(d=>d.workout.cardio.type).length;
+  const totalRows = dayData.reduce((a,d)=>a+workoutRowsFilled(d),0);
+  document.getElementById('week-workout-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${sessions}</div><div class="k">Sessions</div></div>
+    <div class="stat-chip"><div class="v">${cardioCount}</div><div class="k">Cardio logged</div></div>
+    <div class="stat-chip"><div class="v">${totalRows}</div><div class="k">Exercises logged</div></div>
+  `;
+
+  // Mental chart
+  barOrLineChart('chart-week-mental','line', DOW_LABELS, [{
+    label:'Mental score (/10)', data:dayData.map(d=>Number(d.mental.overall)||0),
+    borderColor:COLORS.sage, backgroundColor:'rgba(79,138,166,0.15)', fill:true, tension:.35, pointRadius:3
+  }], {max:10});
+  const tasksLogged = dayData.reduce((a,d)=>a+mentalTasksFilled(d),0);
+  document.getElementById('week-mental-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${tasksLogged}/21</div><div class="k">Mindful tasks</div></div>
+    <div class="stat-chip"><div class="v">${avg(dayData.map(d=>Number(d.mental.overall)||0)).toFixed(1)}</div><div class="k">Avg mental /10</div></div>
+  `;
+
+  // Overall chart
+  barOrLineChart('chart-week-overall','line', DOW_LABELS, [{
+    label:'Overall %', data:oPcts, borderColor:COLORS.brass, backgroundColor:'rgba(238,108,47,0.15)', fill:true, tension:.35, pointRadius:3
+  }]);
+}
+
+/* ============================== MONTHLY VIEW ============================== */
+document.getElementById('month-prev').addEventListener('click', ()=>{ monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()-1, 1); renderMonthly(); });
+document.getElementById('month-next').addEventListener('click', ()=>{ monthCursor = new Date(monthCursor.getFullYear(), monthCursor.getMonth()+1, 1); renderMonthly(); });
+document.getElementById('month-today').addEventListener('click', ()=>{ monthCursor = new Date(); renderMonthly(); });
+
+async function renderMonthly(){
+  const year = monthCursor.getFullYear(), month = monthCursor.getMonth();
+  document.getElementById('month-label').textContent = `${MONTH_LABELS[month]} ${year}`;
+  const daysInMonth = new Date(year, month+1, 0).getDate();
+  const dates = Array.from({length:daysInMonth}, (_,i)=>new Date(year, month, i+1));
+  const dateStrs = dates.map(fmt);
+  const dayData = await Promise.all(dateStrs.map(getDay));
+
+  const hPcts = dayData.map(habitsPct);
+  const wPcts = dayData.map(workoutPct);
+  const mPcts = dayData.map(mentalPct);
+  const oPcts = dayData.map(overallPct);
+  const avg = arr => arr.reduce((a,b)=>a+b,0)/arr.length;
+  const hAvg = avg(hPcts), wAvg = avg(wPcts), mAvg = avg(mPcts), oAvg = avg(oPcts);
+
+  ringChart('mring-habits', hAvg, COLORS.sage);
+  ringChart('mring-workout', wAvg, COLORS.brass);
+  ringChart('mring-mental', mAvg, COLORS.sage);
+  ringChart('mring-overall', oAvg, COLORS.brass);
+  document.getElementById('mring-habits-num').textContent = Math.round(hAvg)+'%';
+  document.getElementById('mring-workout-num').textContent = Math.round(wAvg)+'%';
+  document.getElementById('mring-mental-num').textContent = Math.round(mAvg)+'%';
+  const oAvg10 = oAvg/10;
+  document.getElementById('mring-overall-num').textContent = oAvg10.toFixed(1);
+  document.getElementById('mring-overall-sub').textContent = oAvg10.toFixed(1)+'/10 avg';
+  const sessions = dayData.filter(workoutHasSession).length;
+  document.getElementById('mring-workout-sub').textContent = sessions+' session'+(sessions===1?'':'s');
+
+  // Split into week-sized chunks for the by-week bar charts
+  const weekChunks = [];
+  for(let i=0;i<daysInMonth;i+=7){
+    weekChunks.push({h:hPcts.slice(i,i+7), w:wPcts.slice(i,i+7), m:mPcts.slice(i,i+7), o:oPcts.slice(i,i+7)});
+  }
+  const weekLabels = weekChunks.map((_,i)=>'Wk '+(i+1));
+
+  barOrLineChart('chart-month-habits','bar', weekLabels, [{
+    label:'Habits %', data:weekChunks.map(w=>avg(w.h)), backgroundColor:COLORS.sage, borderRadius:5, maxBarThickness:40
+  }]);
+  const totalDMs = dayData.reduce((a,d)=>a+(Number(d.habits.dms)||0),0);
+  const totalCalls = dayData.reduce((a,d)=>a+(Number(d.habits.call)||0),0);
+  const totalDeepWork = dayData.reduce((a,d)=>a+(Number(d.habits.deepWork)||0),0);
+  document.getElementById('month-habit-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${totalDMs}</div><div class="k">DMs sent</div></div>
+    <div class="stat-chip"><div class="v">${totalCalls}</div><div class="k">Calls booked</div></div>
+    <div class="stat-chip"><div class="v">${totalDeepWork.toFixed(1)}h</div><div class="k">Deep work</div></div>
+  `;
+
+  barOrLineChart('chart-month-workout','bar', weekLabels, [{
+    label:'Workout %', data:weekChunks.map(w=>avg(w.w)), backgroundColor:COLORS.brass, borderRadius:5, maxBarThickness:40
+  }]);
+  document.getElementById('month-workout-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${sessions}</div><div class="k">Sessions logged</div></div>
+    <div class="stat-chip"><div class="v">${dayData.filter(d=>d.workout.cardio.type).length}</div><div class="k">Cardio days</div></div>
+  `;
+
+  barOrLineChart('chart-month-mental','line', weekLabels, [{
+    label:'Mental avg (/10)', data:weekChunks.map(w=>avg(w.m)/10), borderColor:COLORS.sage,
+    backgroundColor:'rgba(79,138,166,0.15)', fill:true, tension:.35, pointRadius:4
+  }], {max:10});
+  const tasksLogged = dayData.reduce((a,d)=>a+mentalTasksFilled(d),0);
+  document.getElementById('month-mental-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${tasksLogged}</div><div class="k">Mindful tasks logged</div></div>
+    <div class="stat-chip"><div class="v">${avg(dayData.map(d=>Number(d.mental.overall)||0)).toFixed(1)}</div><div class="k">Avg mental /10</div></div>
+  `;
+
+  // Calendar heatmap
+  const calGrid = document.getElementById('cal-grid');
+  const firstDow = (dates[0].getDay()+6)%7; // Monday=0
+  let html = DOW_LABELS.map(l=>`<div class="cal-dow">${l}</div>`).join('');
+  for(let i=0;i<firstDow;i++) html += `<div class="cal-cell empty"></div>`;
+  dates.forEach((d,i)=>{
+    const score = oPcts[i]; // 0-100
+    const alpha = Math.max(0.06, Math.min(1, score/100));
+    const future = isFuture(d);
+    const bg = future ? 'var(--track)' : `rgba(238,108,47,${alpha.toFixed(2)})`;
+    html += `<div class="cal-cell ${future?'future':''}" style="background:${bg}" title="${dateStrs[i]} · ${Math.round(score)}%">${d.getDate()}</div>`;
+  });
+  calGrid.innerHTML = html;
+}
+
+/* ============================== DM SETTING — TRACKER ============================== */
+document.querySelectorAll('.subnav-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.subnav-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    dmSubview = btn.dataset.sub;
+    document.getElementById('dm-tracker-subview').style.display = dmSubview==='tracker' ? '' : 'none';
+    document.getElementById('dm-leads-subview').style.display = dmSubview==='leads' ? '' : 'none';
+    if(dmSubview==='tracker') renderDMTracker(); else renderLeads();
+  });
+});
+
+function renderDMSetting(){
+  if(dmSubview==='tracker') renderDMTracker(); else renderLeads();
+}
+
+document.getElementById('dm-date-input').addEventListener('change', (e)=>{
+  if(e.target.value){ dmDate = parseDate(e.target.value); renderDMTracker(); }
+});
+document.getElementById('dm-prev').addEventListener('click', ()=>{ dmDate = addDays(dmDate,-1); renderDMTracker(); });
+document.getElementById('dm-next').addEventListener('click', ()=>{ dmDate = addDays(dmDate,1); renderDMTracker(); });
+document.getElementById('dm-today').addEventListener('click', ()=>{ dmDate = new Date(); renderDMTracker(); });
+
+const DM_METRICS = [
+  {key:'sent', label:'DMs sent', target:60},
+  {key:'convos', label:'Convos started', target:15},
+  {key:'leads', label:'Strong leads', target:7},
+  {key:'calls', label:'Calls booked', target:2}
+];
+
+async function renderDMTracker(){
+  const dateStr = fmt(dmDate);
+  document.getElementById('dm-date-input').value = dateStr;
+  const todayStr = fmt(new Date());
+  document.getElementById('dm-date-label').innerHTML =
+    (dateStr===todayStr ? 'Today' : dmDate.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})) +
+    `<span class="sub">${dmDate.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}</span>`;
+
+  const d = await getDMDay(dateStr);
+  renderDMCounters(d, dateStr);
+  renderDMFunnel(d);
+  await renderDMTrend();
+}
+
+function renderDMCounters(d, dateStr){
+  const wrap = document.getElementById('counter-grid');
+  wrap.innerHTML = DM_METRICS.map(m=>{
+    const val = Number(d[m.key])||0;
+    const pct = Math.max(0, Math.min(100, (val/m.target)*100));
+    const hit = val >= m.target;
+    return `
+    <div class="counter-card ${hit?'goal-hit':''}" data-key="${m.key}" data-target="${m.target}">
+      <div class="c-label">${m.label}</div>
+      <div class="counter-controls">
+        <button class="counter-btn" data-dir="-1" type="button">−</button>
+        <input type="number" class="counter-value" min="0" value="${val}">
+        <button class="counter-btn" data-dir="1" type="button">+</button>
+      </div>
+      <div class="counter-target">${hit?'✓ goal hit':'goal '+m.target}</div>
+      <div class="counter-progress-track"><div class="counter-progress-fill" style="width:${pct}%"></div></div>
+      <div class="counter-rate"></div>
+    </div>`;
+  }).join('');
+
+  function commit(key, val, target, card){
+    d[key] = Math.max(0, val);
+    saveDMDay(dateStr);
+    updateDMRates(d);
+    renderDMFunnel(d);
+    renderDMTrend();
+    const pct = Math.max(0, Math.min(100, (d[key]/target)*100));
+    const hit = d[key] >= target;
+    card.querySelector('.counter-progress-fill').style.width = pct+'%';
+    card.querySelector('.counter-target').textContent = hit ? '✓ goal hit' : 'goal '+target;
+    card.classList.toggle('goal-hit', hit);
+  }
+
+  wrap.querySelectorAll('.counter-card').forEach(card=>{
+    const key = card.dataset.key;
+    const target = Number(card.dataset.target);
+    const input = card.querySelector('.counter-value');
+    card.querySelectorAll('.counter-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const next = Math.max(0, (Number(input.value)||0) + Number(btn.dataset.dir));
+        input.value = next;
+        commit(key, next, target, card);
+      });
+    });
+    input.addEventListener('input', ()=>{ commit(key, Number(input.value)||0, target, card); });
+  });
+
+  updateDMRates(d);
+}
+
+function updateDMRates(d){
+  document.querySelectorAll('#counter-grid .counter-card').forEach(card=>{
+    const key = card.dataset.key;
+    const rateEl = card.querySelector('.counter-rate');
+    if(key==='convos') rateEl.textContent = d.sent>0 ? Math.round(d.convos/d.sent*100)+'% of DMs' : '—';
+    else if(key==='leads') rateEl.textContent = d.convos>0 ? Math.round(d.leads/d.convos*100)+'% of convos' : '—';
+    else if(key==='calls') rateEl.textContent = d.leads>0 ? Math.round(d.calls/d.leads*100)+'% of leads' : '—';
+    else rateEl.textContent = '';
+  });
+}
+
+function renderDMFunnel(d){
+  const max = Math.max(d.sent, d.convos, d.leads, d.calls, 1);
+  const rows = [
+    {label:'DMs sent', val:d.sent, color:'var(--text-dim)'},
+    {label:'Convos started', val:d.convos, color:'var(--sage)'},
+    {label:'Strong leads', val:d.leads, color:'#ffb083'},
+    {label:'Calls booked', val:d.calls, color:'var(--brass)'}
+  ];
+  document.getElementById('funnel').innerHTML = rows.map(r=>`
+    <div class="funnel-row">
+      <div class="funnel-label">${r.label}</div>
+      <div class="funnel-track"><div class="funnel-fill" style="width:${Math.min(100,(r.val/max)*100)}%;background:${r.color}"></div></div>
+      <div class="funnel-num">${r.val}</div>
+    </div>
+  `).join('');
+}
+
+async function renderDMTrend(){
+  const days = Array.from({length:7}, (_,i)=>addDays(dmDate, i-6));
+  const dateStrs = days.map(fmt);
+  const data = await Promise.all(dateStrs.map(getDMDay));
+  const labels = days.map(d=>d.toLocaleDateString(undefined,{weekday:'short'}));
+  barOrLineChart('chart-dm-trend','line', labels, [
+    {label:'DMs sent', data:data.map(x=>x.sent), borderColor:COLORS.dim, backgroundColor:'transparent', tension:.3, pointRadius:2},
+    {label:'Convos', data:data.map(x=>x.convos), borderColor:COLORS.sage, backgroundColor:'transparent', tension:.3, pointRadius:2},
+    {label:'Strong leads', data:data.map(x=>x.leads), borderColor:'#ffb083', backgroundColor:'transparent', tension:.3, pointRadius:2},
+    {label:'Calls booked', data:data.map(x=>x.calls), borderColor:COLORS.brass, backgroundColor:'transparent', tension:.3, pointRadius:3}
+  ], {max:null});
+}
+
+/* ============================== DM SETTING — LEADS ============================== */
+document.getElementById('add-lead-btn').addEventListener('click', async ()=>{
+  const leads = await ensureLeads();
+  leads.unshift({id:genId(), name:'', stage:'cold', dateSpoken:'', age:''});
+  saveList('leads-list', leads);
+  renderLeads();
+});
+
+async function renderLeads(){
+  const leads = await ensureLeads();
+  const tbody = document.getElementById('leads-tbody');
+  tbody.innerHTML = leads.map(l=>`
+    <tr data-id="${l.id}">
+      <td><input type="text" class="lead-name" placeholder="Name or IG handle" value="${escapeHtml(l.name||'')}"></td>
+      <td><select class="lead-stage">
+        ${STAGE_OPTIONS.map(s=>`<option value="${s}" ${l.stage===s?'selected':''}>${capitalize(s)}</option>`).join('')}
+      </select></td>
+      <td><input type="date" class="lead-date" value="${l.dateSpoken||''}"></td>
+      <td><input type="number" class="lead-age" min="0" value="${l.age||''}"></td>
+      <td><button class="row-remove" type="button">Remove</button></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const lead = leads.find(x=>x.id===id);
+    if(!lead) return;
+    const stageSel = tr.querySelector('.lead-stage');
+    styleSelectByValue(stageSel, lead.stage, STAGE_STYLES);
+
+    tr.querySelector('.lead-name').addEventListener('input', (e)=>{
+      lead.name = e.target.value; saveList('leads-list', leads);
+    });
+    stageSel.addEventListener('change', (e)=>{
+      lead.stage = e.target.value;
+      styleSelectByValue(stageSel, lead.stage, STAGE_STYLES);
+      saveList('leads-list', leads);
+      updateLeadStats(leads);
+    });
+    tr.querySelector('.lead-date').addEventListener('change', (e)=>{
+      lead.dateSpoken = e.target.value; saveList('leads-list', leads);
+    });
+    tr.querySelector('.lead-age').addEventListener('input', (e)=>{
+      lead.age = e.target.value; saveList('leads-list', leads);
+    });
+    tr.querySelector('.row-remove').addEventListener('click', ()=>{
+      if(!confirm('Remove this lead?')) return;
+      leadsData = leads.filter(x=>x.id!==id);
+      saveList('leads-list', leadsData);
+      renderLeads();
+    });
+  });
+
+  updateLeadStats(leads);
+}
+
+function updateLeadStats(leads){
+  const total = leads.length;
+  const warm = leads.filter(l=>l.stage==='warm').length;
+  const booked = leads.filter(l=>l.stage==='booked').length;
+  document.getElementById('lead-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${total}</div><div class="k">Total leads</div></div>
+    <div class="stat-chip"><div class="v">${warm}</div><div class="k">Warm</div></div>
+    <div class="stat-chip"><div class="v">${booked}</div><div class="k">Booked</div></div>
+  `;
+}
+
+/* ============================== BOOKINGS ============================== */
+document.getElementById('add-booking-btn').addEventListener('click', async ()=>{
+  const bookings = await ensureBookings();
+  bookings.unshift({id:genId(), name:'', email:'', number:'', when:'', status:'no close'});
+  saveList('bookings-list', bookings);
+  renderBookings();
+});
+
+async function renderBookings(){
+  const bookings = await ensureBookings();
+  const tbody = document.getElementById('bookings-tbody');
+  tbody.innerHTML = bookings.map(b=>`
+    <tr data-id="${b.id}">
+      <td><input type="text" class="bk-name" placeholder="Name" value="${escapeHtml(b.name||'')}"></td>
+      <td><input type="email" class="bk-email" placeholder="Email" value="${escapeHtml(b.email||'')}"></td>
+      <td><input type="tel" class="bk-number" placeholder="Phone" value="${escapeHtml(b.number||'')}"></td>
+      <td><input type="datetime-local" class="bk-when" value="${b.when||''}"></td>
+      <td><select class="bk-status">
+        ${STATUS_OPTIONS.map(s=>`<option value="${s}" ${b.status===s?'selected':''}>${capitalize(s)}</option>`).join('')}
+      </select></td>
+      <td><button class="row-remove" type="button">Remove</button></td>
+    </tr>
+  `).join('');
+
+  tbody.querySelectorAll('tr').forEach(tr=>{
+    const id = tr.dataset.id;
+    const bk = bookings.find(x=>x.id===id);
+    if(!bk) return;
+    const statusSel = tr.querySelector('.bk-status');
+    styleSelectByValue(statusSel, bk.status, STATUS_STYLES);
+
+    tr.querySelector('.bk-name').addEventListener('input', (e)=>{ bk.name=e.target.value; saveList('bookings-list', bookings); });
+    tr.querySelector('.bk-email').addEventListener('input', (e)=>{ bk.email=e.target.value; saveList('bookings-list', bookings); });
+    tr.querySelector('.bk-number').addEventListener('input', (e)=>{ bk.number=e.target.value; saveList('bookings-list', bookings); });
+    tr.querySelector('.bk-when').addEventListener('change', (e)=>{ bk.when=e.target.value; saveList('bookings-list', bookings); });
+    statusSel.addEventListener('change', (e)=>{
+      bk.status = e.target.value;
+      styleSelectByValue(statusSel, bk.status, STATUS_STYLES);
+      saveList('bookings-list', bookings);
+      updateBookingStats(bookings);
+    });
+    tr.querySelector('.row-remove').addEventListener('click', ()=>{
+      if(!confirm('Remove this booking?')) return;
+      bookingsData = bookings.filter(x=>x.id!==id);
+      saveList('bookings-list', bookingsData);
+      renderBookings();
+    });
+  });
+
+  updateBookingStats(bookings);
+}
+
+function updateBookingStats(bookings){
+  const total = bookings.length;
+  const closed = bookings.filter(b=>b.status==='close').length;
+  const rate = total>0 ? Math.round(closed/total*100)+'%' : '—';
+  document.getElementById('booking-stats').innerHTML = `
+    <div class="stat-chip"><div class="v">${total}</div><div class="k">Total bookings</div></div>
+    <div class="stat-chip"><div class="v">${closed}</div><div class="k">Closed</div></div>
+    <div class="stat-chip"><div class="v">${rate}</div><div class="k">Close rate</div></div>
+  `;
+}
+
+/* ============================== INIT ============================== */
+renderDaily();
+
+})();
+</script>
+</body>
+</html>
