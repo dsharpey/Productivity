@@ -386,7 +386,25 @@
     width:64px;height:64px;
     flex:none;
   }
-  .ring-wrap canvas{position:absolute;inset:0;}
+  .ring-svg{
+    width:100%;height:100%;
+    display:block;
+    transform:rotate(-90deg);
+  }
+  .ring-track{
+    fill:none;
+    stroke:var(--track);
+    stroke-width:7;
+  }
+  .ring-fill{
+    fill:none;
+    stroke:var(--brass);
+    stroke-width:7;
+    stroke-linecap:round;
+    stroke-dasharray:169.65;
+    stroke-dashoffset:169.65;
+    transition:stroke-dashoffset .4s ease, stroke .25s ease;
+  }
   .ring-num{
     position:absolute;inset:0;
     display:flex;align-items:center;justify-content:center;
@@ -758,19 +776,19 @@
 
     <div class="rings-row">
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="ring-habits"></canvas><div class="ring-num" id="ring-habits-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="ring-habits" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="ring-habits-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Habits</div><div class="ring-sub" id="ring-habits-sub">0/10</div></div>
       </div>
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="ring-workout"></canvas><div class="ring-num" id="ring-workout-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="ring-workout" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="ring-workout-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Workout</div><div class="ring-sub" id="ring-workout-sub">Incomplete</div></div>
       </div>
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="ring-mental"></canvas><div class="ring-num" id="ring-mental-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="ring-mental" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="ring-mental-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Mental</div><div class="ring-sub" id="ring-mental-sub">0/3 tasks</div></div>
       </div>
       <div class="ring-card overall">
-        <div class="ring-wrap"><canvas id="ring-overall"></canvas><div class="ring-num" id="ring-overall-num">0</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="ring-overall" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="ring-overall-num">0</div></div>
         <div class="ring-meta">
           <div class="ring-title">Today's Ring</div>
           <div class="ring-sub" id="ring-overall-sub">0/10</div>
@@ -851,19 +869,19 @@
 
     <div class="rings-row">
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="wring-habits"></canvas><div class="ring-num" id="wring-habits-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="wring-habits" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="wring-habits-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Habits avg</div><div class="ring-sub">across 7 days</div></div>
       </div>
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="wring-workout"></canvas><div class="ring-num" id="wring-workout-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="wring-workout" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="wring-workout-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Workout avg</div><div class="ring-sub" id="wring-workout-sub">0 sessions</div></div>
       </div>
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="wring-mental"></canvas><div class="ring-num" id="wring-mental-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="wring-mental" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="wring-mental-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Mental avg</div><div class="ring-sub">across 7 days</div></div>
       </div>
       <div class="ring-card overall">
-        <div class="ring-wrap"><canvas id="wring-overall"></canvas><div class="ring-num" id="wring-overall-num">0</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="wring-overall" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="wring-overall-num">0</div></div>
         <div class="ring-meta"><div class="ring-title">Week's Ring</div><div class="ring-sub" id="wring-overall-sub">0/10 avg</div></div>
       </div>
     </div>
@@ -906,19 +924,19 @@
 
     <div class="rings-row">
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="mring-habits"></canvas><div class="ring-num" id="mring-habits-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="mring-habits" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="mring-habits-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Habits avg</div><div class="ring-sub">this month</div></div>
       </div>
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="mring-workout"></canvas><div class="ring-num" id="mring-workout-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="mring-workout" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="mring-workout-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Workout avg</div><div class="ring-sub" id="mring-workout-sub">0 sessions</div></div>
       </div>
       <div class="ring-card">
-        <div class="ring-wrap"><canvas id="mring-mental"></canvas><div class="ring-num" id="mring-mental-num">0%</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="mring-mental" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="mring-mental-num">0%</div></div>
         <div class="ring-meta"><div class="ring-title">Mental avg</div><div class="ring-sub">this month</div></div>
       </div>
       <div class="ring-card overall">
-        <div class="ring-wrap"><canvas id="mring-overall"></canvas><div class="ring-num" id="mring-overall-num">0</div></div>
+        <div class="ring-wrap"><svg viewBox="0 0 64 64" class="ring-svg"><circle class="ring-track" cx="32" cy="32" r="27"></circle><circle class="ring-fill" id="mring-overall" cx="32" cy="32" r="27"></circle></svg><div class="ring-num" id="mring-overall-num">0</div></div>
         <div class="ring-meta"><div class="ring-title">Month's Ring</div><div class="ring-sub" id="mring-overall-sub">0/10 avg</div></div>
       </div>
     </div>
@@ -1222,32 +1240,26 @@ function fmtDuration(mins){
 
 /* ============================== CHART REGISTRY ============================== */
 const charts = {};
-function ringChart(canvasId, pct, color){
-  const el = document.getElementById(canvasId);
+const RING_CIRCUMFERENCE = 169.65; // 2 * PI * r(27), matches the SVG ring markup
+function ringChart(id, pct, color){
+  // Pure SVG/CSS ring — no external chart library involved, so it can never be
+  // blocked by a slow or failed script load. Always fills.
+  const el = document.getElementById(id);
   if(!el) return;
   const clamped = Math.max(0, Math.min(100, pct||0));
-  if(charts[canvasId]){
-    charts[canvasId].data.datasets[0].data = [clamped, 100-clamped];
-    charts[canvasId].data.datasets[0].backgroundColor = [color, COLORS.track];
-    charts[canvasId].update();
-    return;
-  }
-  charts[canvasId] = new Chart(el.getContext('2d'), {
-    type:'doughnut',
-    data:{ datasets:[{ data:[clamped,100-clamped], backgroundColor:[color,COLORS.track], borderWidth:0 }] },
-    options:{
-      cutout:'72%',
-      responsive:true,
-      maintainAspectRatio:true,
-      animation:{duration:350},
-      plugins:{ legend:{display:false}, tooltip:{enabled:false} }
-    }
-  });
+  const offset = RING_CIRCUMFERENCE * (1 - clamped/100);
+  el.style.strokeDashoffset = offset.toFixed(2);
+  el.style.stroke = color;
 }
 function barOrLineChart(canvasId, type, labels, datasets, opts){
   opts = opts || {};
   const el = document.getElementById(canvasId);
   if(!el) return;
+  if(typeof Chart === 'undefined'){
+    console.warn('Chart.js unavailable — skipping', canvasId);
+    return;
+  }
+  try{
   if(charts[canvasId]){ charts[canvasId].destroy(); }
   const maxVal = Object.prototype.hasOwnProperty.call(opts,'max') ? opts.max : 100;
   const yScale = {
@@ -1265,6 +1277,9 @@ function barOrLineChart(canvasId, type, labels, datasets, opts){
     plugins:{ legend:{ display: datasets.length>1, labels:{color:COLORS.dim, font:{size:11}} }, tooltip:{enabled:true} }
   };
   charts[canvasId] = new Chart(el.getContext('2d'), { type, data:{labels, datasets}, options: Object.assign(baseOptions, opts.override ? opts.override : {}) });
+  }catch(e){
+    console.warn('Chart render failed for', canvasId, e);
+  }
 }
 
 /* ============================== APP STATE ============================== */
